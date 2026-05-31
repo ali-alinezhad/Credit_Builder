@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.idea/
+.env
+data/*.db
+data/*.db-*
+coverage/
+.DS_Store
+

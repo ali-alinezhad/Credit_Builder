@@ -1,0 +1,25 @@
+sequenceDiagram
+  participant Client
+  participant API as Fastify API
+  participant Rel as ReliabilityService
+  participant BAC as BankingApiClient
+  participant Bank as Banking API
+  participant DB as SQLite
+  participant Score as Scoring Engine (domain/scoring.ts)
+
+  Client->>API: GET /api/users/{userId}/reliability?from=YYYY-MM-DD
+  API->>Rel: buildReliabilityIndex(userId, from)
+  Rel->>DB: count merchant_categories
+  alt dictionary cache is empty
+    Rel->>BAC: getMerchantCategories()
+    BAC->>Bank: GET /dictionaries/merchant-categories
+    Bank-->>BAC: categories
+    Rel->>DB: upsert merchant_categories
+  end
+  Rel->>DB: load transactions in 6-month window
+  Rel->>DB: load category dictionary
+  Rel->>Score: compute A + B + C + D
+  Score-->>Rel: index + metrics + drivers
+  Rel-->>API: reliability response
+  API-->>Client: 200 + reliability response
+

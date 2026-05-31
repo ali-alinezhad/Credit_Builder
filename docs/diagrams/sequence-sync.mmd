@@ -1,0 +1,34 @@
+sequenceDiagram
+  participant Client
+  participant API as Fastify API
+  participant Sync as SyncService
+  participant BAC as BankingApiClient
+  participant Bank as Banking API
+  participant DB as SQLite
+
+  Client->>API: POST /api/users/{userId}/sync
+  API->>Sync: syncUserTransactions(userId)
+  Sync->>BAC: getDiscovery()
+  BAC->>Bank: GET /
+  Bank-->>BAC: discovery payload
+
+  Sync->>BAC: getMerchantCategories()
+  BAC->>Bank: GET /dictionaries/merchant-categories
+  Bank-->>BAC: categories
+  Sync->>DB: upsert merchant_categories
+
+  Sync->>BAC: getAccounts(userId)
+  BAC->>Bank: GET /users/{userId}/accounts
+  Bank-->>BAC: accounts
+
+  loop each account
+    Sync->>DB: upsert account metadata
+    Sync->>BAC: getTransactionsPage(accountId,cursor)
+    BAC->>Bank: GET /accounts/{id}/transactions?cursor=
+    Bank-->>BAC: transactions + next_cursor
+    Sync->>DB: upsert transactions (INSERT OR IGNORE)
+  end
+  Sync->>DB: update sync_runs status
+  Sync-->>API: sync summary
+  API-->>Client: 200 + sync summary
+

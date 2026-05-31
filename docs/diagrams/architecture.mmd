@@ -1,0 +1,26 @@
+flowchart LR
+  C[Client] --> API[Fastify API]
+
+  API --> SC[SyncController]
+  API --> RC[ReliabilityController]
+
+  SC --> SS[SyncService]
+  RC --> RS[ReliabilityService]
+
+  SS --> BAC[BankingApiClient]
+  BAC --> BANK[Banking API]
+
+  SS --> AR[AccountRepository]
+  SS --> TR[TransactionRepository]
+  SS --> SR[SyncRunRepository]
+  SS --> MCR[MerchantCategoryRepository]
+
+  RS --> TR
+  RS --> MCR
+  RS --> SCORE[Scoring Engine: domain/scoring.ts]
+
+  AR --> DB[(SQLite)]
+  TR --> DB
+  SR --> DB
+  MCR --> DB
+
